@@ -7,6 +7,7 @@
 #include <math.h>
 
 void visualize_sign(pcl::PointXYZ sign_center, float rgb[], bool isLeft);
+void visualize_nothing(bool isLeft);
 
 ros::Publisher marker_pub_left;
 ros::Publisher marker_pub_right;
@@ -32,18 +33,8 @@ class DBScan{
             minSignPoint = minPnt;
             nextGroupID = 1;
 
-            // std::cout<<cloud->points.size()<<std::endl;
-            // std::cout<<"ne"<<std::endl;
-            // std::cout<<cloud->begin()->x<<std::endl;
-            // std::cout<<"oha"<<std::endl;
-            
             visited.reserve(cloud->points.size());
             visited.insert(visited.end(), cloud->size(), 0);
-
-            // std::cout<<"cloud size: "<< cloud->size() <<std::endl;
-            // std::cout<<"points size: "<< cloud->points.size() <<std::endl;
-            // std::cout<<"Visited size: "<< visited.size() <<std::endl;
-
         }
 
         float get_distance_3d(int i1, int i2)
@@ -54,8 +45,6 @@ class DBScan{
             float a = sqrt((num1.x - num2.x) * (num1.x - num2.x) +
                         (num1.y - num2.y) * (num1.y - num2.y) + 
                         (num1.z - num2.z) * (num1.z - num2.z));
-
-            // std::cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxxxCounters index: "<< a <<std::endl;
 
             return sqrt((num1.x - num2.x) * (num1.x - num2.x) +
                         (num1.y - num2.y) * (num1.y - num2.y) + 
@@ -68,11 +57,9 @@ class DBScan{
 
             for (std::vector<int>::size_type i = 0; i != cloud->points.size(); i++){
                 if (get_distance_3d(i, home) < epsilon && i != home and visited[i] < 1){
-                    // std::cout<<i<<". neighbor added bitch"<<i<<std::endl;
                     neighbors.push_back(i);
                 }
             }
-            // std::cout<<"size of Neighbors: "<<neighbors.size()<<std::endl;
 
             return neighbors;
         }
@@ -80,8 +67,6 @@ class DBScan{
         void clustering(int home, std::vector<int> neighbors)
         {
             int cluster_id = visited[home];
-            std::cout<<"GROUPING"<<std::endl;
-            std::cout << home << " -> group " << cluster_id << std::endl;
 
             for(std::vector<int>::iterator neighbor = neighbors.begin(); neighbor != neighbors.end(); ++neighbor) {
                 if(visited[*neighbor] == 0){
@@ -97,18 +82,12 @@ class DBScan{
         {
             for (std::vector<int>::size_type i = 0; i != cloud->points.size(); i++){
                 if (visited[i] == 0){
-                    // std::cout<<"index: "<<i<<std::endl;
                     std::vector<int> neighbors = find_neighbors_3d(i);
-                    std::cout<<"size of Neighbors: "<<neighbors.size()<<std::endl;
-                    std::cout<<"size of minNeighbors: "<<minNeighbor<<std::endl;
-                    
 
                     if(neighbors.size() < minNeighbor){
-                        // std::cout<<"index: "<<i<<std::endl;
                         visited[i] = -1;
                     }
                     else{
-                        std::cout<<"GROUPING"<<std::endl;
                         visited[i] = nextGroupID;
                         nextGroupID++;
 
@@ -120,8 +99,6 @@ class DBScan{
 
         pcl::PointXYZ findAveragePoint(int group_id)
         {
-            // std::cout<<"Entered find_avg_points"<<std::endl;
-
             pcl::PointXYZ avgPoint(0, 0, 0);
             int counter = 0;
 
@@ -134,13 +111,9 @@ class DBScan{
                 }
             }
 
-            // std::cout<<"Summation ended"<<std::endl;
-
             avgPoint.x /= (float)counter;
             avgPoint.y /= (float)counter;
             avgPoint.z /= (float)counter;
-
-            std::cout<<"Dividing ended"<<std::endl;
 
             return avgPoint;
 
@@ -148,29 +121,18 @@ class DBScan{
 
         pcl::PointXYZ get_sign_position()
         {
-            // std::cout<<"Entered get_sign_pos"<<std::endl;
             start_clustering();
-            // std::cout<<"Clustering Ended"<<std::endl;
             std::map<int, int> counters;
-
-            // std::cout<<"Visited size: "<< visited.size() <<std::endl;
 
             for(int i = 0; i < visited.size(); i++){
                 if(visited[i] > 0)
                     counters[visited[i]]++;
             }
-            std::cout<<"Counters size: "<< counters.size() <<std::endl;
-
-            // std::cout<<"Counters map created"<<std::endl;
-
             std::vector<int> groups;
 
             for(std::map<int, int>::iterator it = counters.begin(); it != counters.end(); it++){
                 groups.push_back(it->first);
             }
-            // std::cout<<"Groups size: "<< groups.size() <<std::endl;
-            // std::cout<<"Groups vector created"<<std::endl;
-
             for (int i = 1; i < groups.size(); i++)
             {
                 int j = i - 1;
@@ -183,22 +145,15 @@ class DBScan{
                 groups[j+1] = key;
             }
 
-            // std::cout<<"Sorting ended"<<std::endl;
-            // std::cout<<"Counters size: "<< groups.size() <<std::endl;
-            // if(groups.size() > 0){
-            //     std::cout<<"Points count: "<< counters[groups[0]] <<std::endl;
-            // }
             for (int i = 1; i < groups.size(); i++)
             {
                 std::cout<<groups[i]<<":"<< counters[groups[i]] <<std::endl;
             }
 
             if (groups.size() > 0 && counters[groups[0]] > minSignPoint){
-                // std::cout<<"In the minSgnPoint if"<<std::endl;
                 return findAveragePoint(groups[0]);
             }
             else{
-                // std::cout<<"In the minSgnPoint else"<<std::endl;
                 return pcl::PointXYZ(0, 0, 0);
             }
 
@@ -226,11 +181,11 @@ void sign_finder_left (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         pcl::PointXYZ sign_pos = dbscan_finder.get_sign_position();
 
         if (sign_pos.x == 0 && sign_pos.y == 0 && sign_pos.z == 0){
-            std::cout<<"No traffic sign"<<std::endl;
-            visualization_msgs::Marker filtered_area;
-            filtered_area.header.frame_id = "velodyne";
-            filtered_area.color.a = 0.0;
-            marker_pub_right.publish(filtered_area);
+
+            std::cout<<"No traffic sign on left"<<std::endl;
+            
+            //Publish empty visualization if no sign found
+            visualize_nothing(true);
         }
         else{
             float left_color [] = {0.8, 0.3, 0.4};
@@ -239,6 +194,8 @@ void sign_finder_left (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     }
     else{
         std::cout<<"Left Empty Cloud"<<std::endl;
+        //Publish empty visualization if no sign found
+        visualize_nothing(true);
     }
     
 
@@ -254,28 +211,26 @@ void sign_finder_right (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     /////////////////////////////////////////////////////////////////////////////////
 
     if (xyz_cloud->size() > 0){
-        // std::cout<<"Entered sign finder right"<<std::endl;
 
         DBScan dbscan_finder(xyz_cloud, 1, 1, 1);
-
-        // std::cout<<"Created object right"<<std::endl;
 
         pcl::PointXYZ sign_pos = dbscan_finder.get_sign_position();
 
         if (sign_pos.x == 0 && sign_pos.y == 0 && sign_pos.z == 0){
-                visualization_msgs::Marker filtered_area;
-                filtered_area.header.frame_id = "velodyne";
-                filtered_area.color.a = 0.0;
-                marker_pub_right.publish(filtered_area);
+            std::cout<<"No traffic sign on right"<<std::endl;
+
+            //Publish empty visualization if no sign found
+            visualize_nothing(false);
         }
         else{
             float right_color [] = {0.6, 0.7, 0.5};
-            std::cout<<"signpos: "<< sign_pos.x<< " " << sign_pos.y << " " << sign_pos.z << std::endl;
             visualize_sign(sign_pos, right_color, false);
         }
     }
     else{
         std::cout<<"Right Empty Cloud"<<std::endl;
+        //Publish empty visualization if no sign found
+        visualize_nothing(false);
     }
     
 
@@ -306,6 +261,35 @@ void visualize_sign(pcl::PointXYZ sign_center, float rgb[], bool isLeft)
     filtered_area.color.r = rgb[0];
     filtered_area.color.g = rgb[1];
     filtered_area.color.b = rgb[2];
+
+    if (isLeft)
+        marker_pub_left.publish(filtered_area);
+    else
+        marker_pub_right.publish(filtered_area);
+}
+
+void visualize_nothing(bool isLeft)
+{
+    //rviz visualization 
+    visualization_msgs::Marker filtered_area;
+    filtered_area.header.frame_id = "velodyne";
+    filtered_area.type = visualization_msgs::Marker::CUBE;
+    filtered_area.action = visualization_msgs::Marker::ADD;
+
+    filtered_area.pose.position.x = 0;
+    filtered_area.pose.position.y = 0;
+    filtered_area.pose.position.z = 0;
+
+    filtered_area.pose.orientation.x = 0.0;
+    filtered_area.pose.orientation.y = 0.0;
+    filtered_area.pose.orientation.z = 0.0;
+    filtered_area.pose.orientation.w = 1.0;
+
+    filtered_area.scale.x = 0.00001;
+    filtered_area.scale.y = 0.00001;
+    filtered_area.scale.z = 0.00001;
+
+    filtered_area.color.a = 0.0001;
 
     if (isLeft)
         marker_pub_left.publish(filtered_area);
