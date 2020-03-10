@@ -270,7 +270,6 @@ void sign_finder_right (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
         }
         else{
             float right_color [] = {0.6, 0.7, 0.5};
-            std::cout<<"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  WHAT THE FUCK XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"<< std::endl;
             std::cout<<"signpos: "<< sign_pos.x<< " " << sign_pos.y << " " << sign_pos.z << std::endl;
             visualize_sign(sign_pos, right_color, false);
         }
