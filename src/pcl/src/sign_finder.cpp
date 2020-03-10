@@ -188,7 +188,7 @@ void sign_finder_left (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
             visualize_nothing(true);
         }
         else{
-            float left_color [] = {0.8, 0.3, 0.4};
+            float left_color [] = {0.68, 0.23, 0.24};
             visualize_sign(sign_pos, left_color, true);
         }
     }
@@ -223,7 +223,7 @@ void sign_finder_right (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
             visualize_nothing(false);
         }
         else{
-            float right_color [] = {0.6, 0.7, 0.5};
+            float right_color [] = {0.36, 0.67, 0.47};
             visualize_sign(sign_pos, right_color, false);
         }
     }

@@ -70,8 +70,8 @@ void cloud_filter (const sensor_msgs::PointCloud2ConstPtr& cloud_msg)
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_left(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud_right(new pcl::PointCloud<pcl::PointXYZ>);
 
-    float left_box [] = {0, 0, 0, 10, 5, 3};
-    float right_box [] = {0, -5, 0, 10, 0, 3};
+    float left_box [] = {-5, 0, 0, 13, 5, 3};
+    float right_box [] = {-5, -5, 0, 13, 0, 3};
 
     *filtered_cloud_left = cut_pointcloud_box(xyz_cloud, left_box);
     *filtered_cloud_right = cut_pointcloud_box(xyz_cloud, right_box);
